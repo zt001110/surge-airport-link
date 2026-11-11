@@ -1,18 +1,21 @@
 // 手动运行一次，只修改当前选择；订阅地址全部留在主配置中。
 (function () {
   "use strict";
-  var selector = "机场选择";
-  var blocked = "拒绝";
+  var selector = "✈️ 机场选择";
+  var blocked = "⛔️ 拒绝";
   var airports = {
-    "TERO": "TERO",
-    "SSRDOG": "SSRDOG",
-    "兔子": "兔子",
-    "哆啦A梦": "哆啦A梦",
-    "顺畅网络": "顺畅网络"
+    "🛫 TERO": "TERO",
+    "🛫 SSRDOG": "SSRDOG",
+    "🛫 兔子": "兔子",
+    "🛫 哆啦A梦": "哆啦A梦",
+    "🛫 顺畅网络": "顺畅网络"
   };
   var entries = [
-    "香港节点", "台湾节点", "狮城节点",
-    "日本节点", "美国节点"
+    { group: "🇭🇰 香港节点", flag: "🇭🇰", name: "香港节点" },
+    { group: "🇨🇳 台湾节点", flag: "🇨🇳", name: "台湾节点" },
+    { group: "🇸🇬 狮城节点", flag: "🇸🇬", name: "狮城节点" },
+    { group: "🇯🇵 日本节点", flag: "🇯🇵", name: "日本节点" },
+    { group: "🇺🇲 美国节点", flag: "🇺🇲", name: "美国节点" }
   ];
   var finished = false;
 
@@ -27,11 +30,11 @@
   function failClosed(message) {
     // 只保护五个地区入口，不修改三个全机场手动组。
     var failed = [];
-    entries.forEach(function (name) {
+    entries.forEach(function (entry) {
       try {
-        if (!$surge.setSelectGroupPolicy(name, blocked)) failed.push(name);
+        if (!$surge.setSelectGroupPolicy(entry.group, blocked)) failed.push(entry.group);
       } catch (_) {
-        failed.push(name);
+        failed.push(entry.group);
       }
     });
     finish(false, message + (failed.length
@@ -47,7 +50,7 @@
     }
     var selected = before.decisions[selector] || before.groups[selector][0];
     var airport = airports[selected];
-    if (!airport) {
+    if (typeof airport !== "string") {
       finish(false, "无法识别所选机场，请先在机场选择中选一个机场。");
       return;
     }
@@ -56,7 +59,7 @@
     $httpAPI("GET", "/v1/policy_groups", null, function (groups) {
       var transactionStarted = false;
       try {
-        if (!groups || groups.error || !Array.isArray(groups[selector])) {
+        if (!groups || groups.error || typeof groups !== "object") {
           finish(false, "无法读取全部策略组，未修改任何入口。");
           return;
         }
@@ -67,13 +70,20 @@
           return;
         }
         var plan = entries.map(function (entry) {
-          var target = airport + " · " + entry;
-          var options = current.groups[entry];
-          if (!options || options.indexOf(target) < 0 || options.indexOf(blocked) < 0 ||
-              !Array.isArray(groups[target])) {
-            throw new Error("配置与脚本不匹配：" + entry);
+          var target = entry.flag + " " + airport + " · " + entry.name;
+          var options = current.groups[entry.group];
+          if (!options || options.indexOf(blocked) < 0) {
+            throw new Error("配置与脚本不匹配：" + entry.group);
           }
-          var members = groups[target];
+          // 某些机场在配置中没有该地区的专属组，应安全地选择拒绝。
+          var exists = options.indexOf(target) >= 0;
+          var members = exists ? groups[target] : [];
+          if (exists && !Array.isArray(members)) {
+            throw new Error("无法读取机场专属组：" + target);
+          }
+          if (!Array.isArray(members)) {
+            members = [];
+          }
           if (members.some(function (member) { return member.isGroup; })) {
             throw new Error("机场专属组仍包含策略组而不是真实节点：" + target);
           }
@@ -81,7 +91,7 @@
             return member.enabled !== false &&
               member.typeDescription !== "DIRECT" && member.typeDescription !== "REJECT";
           });
-          return { entry: entry, target: available ? target : blocked, empty: !available };
+          return { entry: entry.group, name: entry.name, target: available ? target : blocked, empty: !available };
         });
         var touched = false;
         for (var i = 0; i < plan.length; i++) {
@@ -101,7 +111,7 @@
           return;
         }
         var empty = plan.filter(function (item) { return item.empty; })
-          .map(function (item) { return item.entry; });
+          .map(function (item) { return item.name; });
         finish(true, airport + "机场：" + (touched ? "五个地区入口已同步。" : "地区入口已一致，无需重复切换。") +
           (empty.length ? "\n以下分类暂无匹配节点，已拒绝：" + empty.join("、") +
             "。订阅更新后请再次运行。" : ""));
