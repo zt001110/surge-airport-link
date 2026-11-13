@@ -5,7 +5,7 @@
 ## Requirements
 
 - Surge for Mac or iOS with the Surge scripting APIs used by this script.
-- A configuration that provides the `✈️ 机场选择` group with options `🛫 TERO`, `🛫 SSRDOG`, `🛫 兔子`, `🛫 哆啦A梦`, `🛫 顺畅网络`, and `🛫 Kitty Network`.
+- A configuration that provides the `✈️ 机场选择` group with options `🛫 TERO`, `🛫 SSRDOG`, `🛫 兔子`, `🛫 哆啦A梦`, `🛫 Kitty Network`.
 - These five regional select groups: `🇭🇰 香港节点`, `🇨🇳 台湾节点`, `🇸🇬 狮城节点`, `🇯🇵 日本节点`, and `🇺🇲 美国节点`.
 - Each regional group must include `⛔️ 拒绝`. Airport-specific smart groups are named `<flag> <airport> · <region>`; regions absent from the selected airport are set to `⛔️ 拒绝`.
 

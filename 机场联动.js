@@ -8,7 +8,6 @@
     "🛫 SSRDOG": "SSRDOG",
     "🛫 兔子": "兔子",
     "🛫 哆啦A梦": "哆啦A梦",
-    "🛫 顺畅网络": "顺畅网络",
     "🛫 Kitty Network": "Kitty Network"
   };
   var entries = [
